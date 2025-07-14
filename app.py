@@ -39,6 +39,75 @@ def index():
     return "Kakeibo App is running!"
 
 
+@app.route("/income", methods=["POST"])
+def add_income():
+    data = request.json
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO income (date, category, amount) VALUES (?, ?, ?)",
+        (data["date"], data["category"], data["amount"]),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Income added"}), 201
+
+
+@app.route("/income", methods=["GET"])
+def get_income():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM income WHERE date BETWEEN ? AND ?", (start, end))
+    rows = c.fetchall()
+    conn.close()
+    return jsonify(rows)
+
+
+@app.route("/expense", methods=["POST"])
+def add_expense():
+    data = request.json
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        """
+        INSERT INTO expense (date, shop, category, payment, amount)
+        VALUES (?, ?, ?, ?, ?)
+    """,
+        (data["date"], data["shop"], data["category"], data["payment"], data["amount"]),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Expense added"}), 201
+
+
+@app.route("/expense", methods=["GET"])
+def get_expense():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM expense WHERE date BETWEEN ? AND ?", (start, end))
+    rows = c.fetchall()
+    conn.close()
+
+    # 整形（オプション）
+    results = [
+        {
+            "id": row[0],
+            "date": row[1],
+            "shop": row[2],
+            "category": row[3],
+            "payment": row[4],
+            "amount": row[5],
+        }
+        for row in rows
+    ]
+
+    return jsonify(results)
+
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)
