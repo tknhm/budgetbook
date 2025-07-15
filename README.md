@@ -51,13 +51,9 @@ python app.py
 
 ---
 
-## 🛠 今後の予定（To Do）
-
-* [ ] 月・カテゴリ・支払い方法ごとの集計API
-* [ ] Chart.js を使ったグラフ表示（円グラフ・棒グラフ・サンキー図）
-* [ ] HTML入力フォームの作成（Flaskテンプレート）
-* [ ] OCR機能で手書き家計簿の読み取り（Tesseract + pytesseract）
-* [ ] テストコードの実装（pytest）
+## 🗂 タスク管理
+GitHub Projectsでタスクを管理しています  
+→ [開発タスクボード](https://github.com/あなたのユーザー名/budgetbook/projects/1)
 
 ---
 
