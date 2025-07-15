@@ -53,7 +53,7 @@ python app.py
 
 ## 🗂 タスク管理
 GitHub Projectsでタスクを管理しています  
-→ [開発タスクボード](https://github.com/tknhm/budgetbook/projects/2)
+→ [開発タスクボード](https://github.com/users/tknhm/projects/2)
 
 ---
 
