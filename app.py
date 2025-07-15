@@ -1,116 +1,81 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 import sqlite3
-import os
 import json
+import os
 
 app = Flask(__name__)
-DB_PATH = "db/budgetbook.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook.db")
+
+# --- 共通ヘルパー ---
 
 
-# DB初期化（1回だけ実行）
-def init_db():
-    if not os.path.exists("db"):
-        os.makedirs("db")
+def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS income (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date TEXT,
-                    category TEXT,
-                    amount INTEGER
-                )"""
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def json_response(data, status=200):
+    return app.response_class(
+        response=json.dumps(data, ensure_ascii=False),
+        status=status,
+        mimetype="application/json",
     )
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS expense (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date TEXT,
-                    shop TEXT,
-                    category TEXT,
-                    payment TEXT,
-                    amount INTEGER
-                )"""
-    )
-    conn.commit()
-    conn.close()
 
 
-@app.route("/")
-def index():
-    return "Kakeibo App is running!"
-
-
+# --- 収入API ---
 @app.route("/income", methods=["POST"])
 def add_income():
     data = request.json
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
+    conn = get_db_connection()
+    conn.execute(
         "INSERT INTO income (date, category, amount) VALUES (?, ?, ?)",
         (data["date"], data["category"], data["amount"]),
     )
     conn.commit()
     conn.close()
-    return jsonify({"message": "Income added"}), 201
+    return json_response({"message": "Income added"})
 
 
 @app.route("/income", methods=["GET"])
 def get_income():
     start = request.args.get("start")
     end = request.args.get("end")
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM income WHERE date BETWEEN ? AND ?", (start, end))
-    rows = c.fetchall()
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT * FROM income WHERE date BETWEEN ? AND ? ORDER BY date", (start, end)
+    ).fetchall()
     conn.close()
-    return app.response_class(
-        response=json.dumps(rows, ensure_ascii=False), mimetype="application/json"
-    )
+    result = [dict(row) for row in rows]
+    return json_response(result)
 
 
+# --- 支出API ---
 @app.route("/expense", methods=["POST"])
 def add_expense():
     data = request.json
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        INSERT INTO expense (date, shop, category, payment, amount)
-        VALUES (?, ?, ?, ?, ?)
-    """,
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO expense (date, shop, category, payment, amount) VALUES (?, ?, ?, ?, ?)",
         (data["date"], data["shop"], data["category"], data["payment"], data["amount"]),
     )
     conn.commit()
     conn.close()
-    return jsonify({"message": "Expense added"}), 201
+    return json_response({"message": "Expense added"})
 
 
 @app.route("/expense", methods=["GET"])
 def get_expense():
     start = request.args.get("start")
     end = request.args.get("end")
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM expense WHERE date BETWEEN ? AND ?", (start, end))
-    rows = c.fetchall()
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT * FROM expense WHERE date BETWEEN ? AND ? ORDER BY date", (start, end)
+    ).fetchall()
     conn.close()
-
-    # 整形（オプション）
-    results = [
-        {
-            "id": row[0],
-            "date": row[1],
-            "shop": row[2],
-            "category": row[3],
-            "payment": row[4],
-            "amount": row[5],
-        }
-        for row in rows
-    ]
-
-    return app.response_class(
-        response=json.dumps(results, ensure_ascii=False), mimetype="application/json"
-    )
+    result = [dict(row) for row in rows]
+    return json_response(result)
 
 
 @app.route("/expense/summary", methods=["GET"])
@@ -119,35 +84,22 @@ def expense_summary():
     end = request.args.get("end")
     group_by = request.args.get("group_by")
 
-    # 必須パラメータの確認
     if not all([start, end, group_by]):
-        return jsonify({"error": "start, end, and group_by are required"}), 400
+        return json_response({"error": "start, end, and group_by are required"}, 400)
 
     if group_by not in ["category", "payment"]:
-        return jsonify({"error": "group_by must be 'category' or 'payment'"}), 400
+        return json_response({"error": "group_by must be 'category' or 'payment'"}, 400)
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    # 動的に GROUP BY を切り替える
-    query = f"""
-        SELECT {group_by}, SUM(amount)
-        FROM expense
-        WHERE date BETWEEN ? AND ?
-        GROUP BY {group_by}
-    """
-    c.execute(query, (start, end))
-    rows = c.fetchall()
+    conn = get_db_connection()
+    rows = conn.execute(
+        f"SELECT {group_by}, SUM(amount) AS total FROM expense WHERE date BETWEEN ? AND ? GROUP BY {group_by}",
+        (start, end),
+    ).fetchall()
     conn.close()
 
-    # JSON形式に整形
-    result = [{group_by: row[0], "total": row[1]} for row in rows]
-
-    return app.response_class(
-        response=json.dumps(result, ensure_ascii=False), mimetype="application/json"
-    )
+    result = [{group_by: row[group_by], "total": row["total"]} for row in rows]
+    return json_response(result)
 
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
