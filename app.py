@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import os
+import json
 
 app = Flask(__name__)
 DB_PATH = "db/budgetbook.db"
@@ -62,7 +63,9 @@ def get_income():
     c.execute("SELECT * FROM income WHERE date BETWEEN ? AND ?", (start, end))
     rows = c.fetchall()
     conn.close()
-    return jsonify(rows)
+    return app.response_class(
+        response=json.dumps(rows, ensure_ascii=False), mimetype="application/json"
+    )
 
 
 @app.route("/expense", methods=["POST"])
@@ -105,7 +108,44 @@ def get_expense():
         for row in rows
     ]
 
-    return jsonify(results)
+    return app.response_class(
+        response=json.dumps(results, ensure_ascii=False), mimetype="application/json"
+    )
+
+
+@app.route("/expense/summary", methods=["GET"])
+def expense_summary():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    group_by = request.args.get("group_by")
+
+    # 必須パラメータの確認
+    if not all([start, end, group_by]):
+        return jsonify({"error": "start, end, and group_by are required"}), 400
+
+    if group_by not in ["category", "payment"]:
+        return jsonify({"error": "group_by must be 'category' or 'payment'"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    # 動的に GROUP BY を切り替える
+    query = f"""
+        SELECT {group_by}, SUM(amount)
+        FROM expense
+        WHERE date BETWEEN ? AND ?
+        GROUP BY {group_by}
+    """
+    c.execute(query, (start, end))
+    rows = c.fetchall()
+    conn.close()
+
+    # JSON形式に整形
+    result = [{group_by: row[0], "total": row[1]} for row in rows]
+
+    return app.response_class(
+        response=json.dumps(result, ensure_ascii=False), mimetype="application/json"
+    )
 
 
 if __name__ == "__main__":
