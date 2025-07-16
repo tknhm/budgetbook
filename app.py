@@ -7,6 +7,35 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook.db")
 
+
+# DB初期化（1回だけ実行）
+def init_db():
+    if not os.path.exists("db"):
+        os.makedirs("db")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS income (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    date TEXT,
+                    category TEXT,
+                    amount INTEGER
+                )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS expense (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    date TEXT,
+                    shop TEXT,
+                    category TEXT,
+                    payment TEXT,
+                    amount INTEGER
+                )"""
+    )
+    conn.commit()
+    conn.close()
+
+
 # --- 共通ヘルパー ---
 
 
