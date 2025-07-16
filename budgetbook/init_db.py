@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS expense (
     shop TEXT,
     category TEXT NOT NULL,
     amount REAL NOT NULL,
-    payment_method TEXT
+    payment TEXT
 );
 """
 
