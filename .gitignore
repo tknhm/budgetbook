@@ -6,8 +6,9 @@
 __pycache__/
 *.pyc
 
-# pytes cache 
+# pytest cache 
 .pytest_cache/
+.coverage
 
 # SQLite DB
 budgetbook/db/*.db

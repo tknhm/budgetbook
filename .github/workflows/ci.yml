@@ -22,9 +22,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Init DB
-        run: python -m budgetbook.init_db
+        run: TESTING=1 python -m budgetbook.init_db
         
       - name: Run tests
-        run: pytest --cov=budgetbook --cov-report=term-missing
-        env:
-          TESTING: 1
+        run: TESTING=1 pytest --cov=budgetbook --cov-report=term-missing
