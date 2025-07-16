@@ -1,6 +1,13 @@
+# Settings
 .vscode/
 .python-version
+
+# Python cache
 __pycache__/
 *.pyc
-*/db/*.db
+
+# pytes cache 
 .pytest_cache/
+
+# SQLite DB
+budgetbook/db/*.db
