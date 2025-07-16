@@ -1,5 +1,6 @@
-.vscode
+.vscode/
 .python-version
 __pycache__/
 *.pyc
-db/*.db
+*/db/*.db
+.pytest_cache/
