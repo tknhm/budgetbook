@@ -9,7 +9,7 @@
 ## ✅ セットアップ
 
 ```bash
-git clone https://github.com/<yourname>/budgetbook.git
+git clone https://github.com/tknhm/budgetbook.git
 cd budgetbook
 pyenv local 3.12.x  # 任意のバージョン
 pip install -r requirements.txt
