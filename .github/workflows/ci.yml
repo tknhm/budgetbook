@@ -25,4 +25,6 @@ jobs:
         run: python -m budgetbook.init_db
         
       - name: Run tests
-        run: pytest -v
+        run: pytest --cov=budgetbook --cov-report=term-missing
+        env:
+          TESTING: 1
