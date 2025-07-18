@@ -2,21 +2,16 @@ from flask import Flask, request
 import sqlite3
 import json
 import os
+from budgetbook import config
 
 app = Flask(__name__)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-if os.getenv("TESTING") == "1":
-    DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook_test.db")
-else:
-    DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook.db")
-
+app.config["DB_PATH"] = config.DB_PATH
 
 # --- 共通ヘルパー ---
 
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(app.config["DB_PATH"])
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -40,7 +35,7 @@ def add_income():
     )
     conn.commit()
     conn.close()
-    return json_response({"message": "Income added"})
+    return json_response({"message": "Income added"}, status=201)
 
 
 @app.route("/income", methods=["GET"])
@@ -67,7 +62,7 @@ def add_expense():
     )
     conn.commit()
     conn.close()
-    return json_response({"message": "Expense added"})
+    return json_response({"message": "Expense added"}, status=201)
 
 
 @app.route("/expense", methods=["GET"])

@@ -1,12 +1,8 @@
 import sqlite3
 import os
+from budgetbook.config import DB_PATH
+from budgetbook.app import app
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-if os.getenv("TESTING") == "1":
-    DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook_test.db")
-else:
-    DB_PATH = os.path.join(BASE_DIR, "db", "budgetbook.db")
 
 schema = """
 CREATE TABLE IF NOT EXISTS income (
@@ -28,11 +24,33 @@ CREATE TABLE IF NOT EXISTS expense (
 
 
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript(schema)
+    db_path = app.config["DB_PATH"]  # ← app.config から取る
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS income (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            category TEXT NOT NULL,
+            amount INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS expense (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            store TEXT,
+            category TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            payment_method TEXT
+        );
+        """
+    )
+
+    conn.commit()
     conn.close()
-    print(f"✅ Initialized DB at {DB_PATH}")
+    print(f"✅ Initialized DB at {db_path}")
 
 
 if __name__ == "__main__":

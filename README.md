@@ -49,33 +49,56 @@ curl -X POST "http://127.0.0.1:5000/income" \
 
 ---
 
-## ✅ テスト
+## 🧪 テスト
 
-### テスト実行（ローカル）
+このプロジェクトは `pytest` を利用して自動テストを行っています。  
+テスト実行時は **本番DB(`budgetbook.db`) ではなく、一時ファイルのSQLite DB** を使うため、  
+ローカルデータを汚す心配はありません。
 
-テストは `pytest` を使用しています。
-**テスト専用DB** を使うため、環境変数 `TESTING=1` を指定してください。
-
-```bash
-# テストDB初期化
-TESTING=1 python -m budgetbook.init_db
-
-# テスト実行
-TESTING=1 pytest -v
-```
-
-テストカバレッジも確認できます：
+### 実行方法
 
 ```bash
-TESTING=1 pytest --cov=budgetbook --cov-report=term-missing
-```
+# 1. 依存パッケージが入っていない場合はインストール
+pip install -r requirements.txt
 
-HTMLレポートを生成したい場合：
+# 2. テストを実行
+pytest -v --cov=budgetbook --cov-report=term-missing
+````
 
-```bash
-TESTING=1 pytest --cov=budgetbook --cov-report=html
-open htmlcov/index.html
-```
+✅ **テスト時のポイント**
+
+* `tests/conftest.py` がテスト用の一時ファイルDBを作成し、`init_db()` で初期化します
+* `init_db()` は `current_app.config["DB_PATH"]` を見てDBを作るので、
+  テスト・開発・本番で別のDBを使えます
+* テスト終了後、一時ファイルDBは削除されます
+
+---
+
+### CI/CD（GitHub Actions）
+
+GitHub Actions でもテストが実行されます。
+CI環境でも同じく一時ファイルDBが使われるので、
+PR や main ブランチの変更でもローカルDBは影響を受けません。
+
+---
+
+## ✅ DBの動作環境
+
+| 環境    | DBの種類      | パス                              |
+| ----- | ---------- | ------------------------------- |
+| ローカル  | SQLiteファイル | `budgetbook/db/budgetbook.db`   |
+| テスト   | 一時ファイルDB   | `tempfile.mkstemp()` で作られ、終了後削除 |
+| CI/CD | 一時ファイルDB   | GitHub Actions 内の一時ディレクトリ       |
+
+---
+
+## ✅ これまでの改善点
+
+* `init_db()` が `current_app.config["DB_PATH"]` を参照するようになり、環境ごとにDB切替が可能
+* `pytest` のテストDBは一時ファイルに自動切替
+* `conftest.py` がアプリケーションコンテキスト内でDBを初期化
+* CI/CDでもローカルと同じ手順で動作
+
 
 ---
 
