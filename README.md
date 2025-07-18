@@ -130,5 +130,3 @@ GitHub Projectsでタスクを管理しています
 * [Flask ドキュメント](https://flask.palletsprojects.com/)
 * [pytest ドキュメント](https://docs.pytest.org/)
 * [GitHub Actions ワークフロー](https://docs.github.com/ja/actions)
-
-```
