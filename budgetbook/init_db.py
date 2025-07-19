@@ -1,30 +1,16 @@
-import sqlite3
 import os
-from budgetbook.config import DB_PATH
+import sqlite3
 from budgetbook.app import app
 
 
-schema = """
-CREATE TABLE IF NOT EXISTS income (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
-    category TEXT NOT NULL,
-    amount REAL NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS expense (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
-    shop TEXT,
-    category TEXT NOT NULL,
-    amount REAL NOT NULL,
-    payment TEXT
-);
-"""
-
-
 def init_db():
-    db_path = app.config["DB_PATH"]  # ← app.config から取る
+    db_path = app.config["DB_PATH"]
+
+    # DBファイルのディレクトリを確実に作る
+    db_dir = os.path.dirname(db_path)
+    if db_dir:  # ルート直下のときは空文字になるのでチェック
+        os.makedirs(db_dir, exist_ok=True)
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
