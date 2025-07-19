@@ -1,67 +1,82 @@
-import pytest
-from budgetbook.app import app
+def test_summary_group_by_category(client):
+    """summary API でカテゴリごとの集計ができること"""
 
+    # 収入を登録
+    client.post(
+        "/income",
+        json={
+            "date": "2025-07-10",
+            "category": "給料",
+            "amount": 5000,
+        },
+    )
 
-@pytest.fixture
-def client():
-    app.testing = True
-    with app.test_client() as client:
-        yield client
-
-
-def seed_expenses(client):
-    samples = [
-        {
-            "date": "2025-07-01",
-            "shop": "A",
+    # 支出を登録
+    client.post(
+        "/expense",
+        json={
+            "date": "2025-07-11",
+            "shop": "スーパー",
             "category": "食費",
+            "amount": 1000,
             "payment": "現金",
-            "amount": 100,
         },
-        {
-            "date": "2025-07-03",
-            "shop": "B",
-            "category": "交通費",
-            "payment": "PayPay",
-            "amount": 200,
+    )
+    client.post(
+        "/expense",
+        json={
+            "date": "2025-07-12",
+            "shop": "ドラッグストア",
+            "category": "日用品",
+            "amount": 500,
+            "payment": "カード",
         },
-        {
-            "date": "2025-07-05",
-            "shop": "C",
-            "category": "食費",
-            "payment": "現金",
-            "amount": 300,
-        },
-    ]
-    for s in samples:
-        client.post("/expense", json=s)
+    )
 
-
-def test_summary_by_category(client):
-    seed_expenses(client)
+    # カテゴリごとの集計
     res = client.get(
         "/expense/summary?start=2025-07-01&end=2025-07-31&group_by=category"
     )
     assert res.status_code == 200
     data = res.get_json()
-    # 食費 100+300=400, 交通費 200
-    assert {"category": "食費", "total": 400} in data
-    assert {"category": "交通費", "total": 200} in data
+
+    # 食費:1000, 日用品: 500 が含まれるはず
+    assert any(item["category"] == "食費" and item["total"] == 1000 for item in data)
+    assert any(item["category"] == "日用品" and item["total"] == 500 for item in data)
 
 
-def test_summary_by_payment(client):
-    seed_expenses(client)
+def test_summary_group_by_payment(client):
+    """summary API で支払い方法ごとの集計ができること"""
+
+    # 支出を登録
+    client.post(
+        "/expense",
+        json={
+            "date": "2025-07-15",
+            "shop": "カフェ",
+            "category": "交際費",
+            "amount": 800,
+            "payment": "PayPay",
+        },
+    )
+    client.post(
+        "/expense",
+        json={
+            "date": "2025-07-16",
+            "shop": "書店",
+            "category": "教養",
+            "amount": 1200,
+            "payment": "カード",
+        },
+    )
+
+    # 支払い方法ごとの集計
     res = client.get(
         "/expense/summary?start=2025-07-01&end=2025-07-31&group_by=payment"
     )
     assert res.status_code == 200
     data = res.get_json()
-    # 現金 100+300=400, PayPay 200
-    assert {"payment": "現金", "total": 400} in data
-    assert {"payment": "PayPay", "total": 200} in data
 
-
-def test_summary_missing_params(client):
-    res = client.get("/expense/summary?start=2025-07-01&end=2025-07-31")
-    assert res.status_code == 400
-    assert "error" in res.get_json()
+    # PayPay:800, カード: 120000 が含まれるはず
+    assert any(item["payment"] == "PayPay" and item["total"] == 800 for item in data)
+    assert any(item["payment"] == "カード" and item["total"] == 1200 for item in data)

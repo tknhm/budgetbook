@@ -1,155 +1,148 @@
 # budgetbook
 
-家計簿管理アプリ（Flask + SQLite）。  
-ローカルで動作し、収入・支出の登録、期間ごとの集計、可視化が可能です。  
-将来的にはスマホ対応やOCR読み取り機能も追加予定。
+ローカル環境で動作するシンプルな家計簿アプリです。
+**収入・支出の登録、期間ごとの集計、カテゴリや支払い方法ごとの可視化**をサポートします。
+
+今後はスマホ対応やOCR入力機能も視野に入れています。
+
+---
+
+## ✅ 機能概要
+
+* **収入管理**
+
+  * 日付・カテゴリ・金額の登録
+* **支出管理**
+
+  * 日付・店名・カテゴリ・金額・支払い方法（現金/カード/PayPayなど）の登録
+* **集計**
+
+  * 月ごとや任意期間のカテゴリ別・支払い方法別の集計
+  * 将来的には棒グラフ・円グラフ・サンキー図で可視化予定
+* **API 提供**
+
+  * `/income`, `/expense` でデータ登録
+  * `/expense/summary` で期間集計
+
+---
+
+## ✅ プロジェクト構成
+
+```
+budgetbook/
+├── budgetbook/
+│   ├── __init__.py
+│   ├── app.py               # Flaskメインアプリ
+│   ├── config.py            # DBパスなど環境ごとの設定
+│   ├── init_db.py           # DB初期化スクリプト
+│   ├── routes/
+│   │   ├── income.py        # 収入API
+│   │   ├── expense.py       # 支出API
+│   │   └── summary.py       # 集計API
+│   └── db/                  # SQLite DBファイル保存先
+├── tests/
+│   ├── conftest.py          # pytest の共通設定(DB切替)
+│   ├── test_income.py       # 収入APIのテスト
+│   ├── test_expense.py      # 支出APIのテスト
+│   └── test_summary.py      # 集計APIのテスト
+├── requirements.txt         # 依存パッケージ
+├── pytest.ini               # pytest設定
+└── README.md
+```
 
 ---
 
 ## ✅ セットアップ
 
 ```bash
-git clone https://github.com/tknhm/budgetbook.git
+git clone https://github.com/あなたのユーザ名/budgetbook.git
 cd budgetbook
-pyenv local 3.12.x  # 任意のバージョン
+
+# Python環境（pyenv推奨）
+pyenv install 3.12.x
+pyenv virtualenv 3.12.x budgetbook
+pyenv activate budgetbook
+
+# 依存ライブラリをインストール
 pip install -r requirements.txt
-````
 
----
-
-## ✅ データベース初期化
-
-ローカル開発用DB:
-
-```bash
+# DB初期化
 python -m budgetbook.init_db
 ```
 
-テスト用DB:
+アプリ起動は
 
 ```bash
-TESTING=1 python -m budgetbook.init_db
+flask --app budgetbook.app run
 ```
 
 ---
 
-## ✅ サーバ起動
-
-```bash
-flask --app budgetbook.app run --debug
-```
-
-API例:
-
-```bash
-curl -X POST "http://127.0.0.1:5000/income" \
-  -H "Content-Type: application/json" \
-  -d '{"date":"2025-07-16","category":"給料","amount":300000}'
-```
-
----
-
-## 🧪 テスト
-
-このプロジェクトは `pytest` を利用して自動テストを行っています。  
-テスト実行時は **本番DB(`budgetbook.db`) ではなく、一時ファイルのSQLite DB** を使うため、  
-ローカルデータを汚す心配はありません。
+## ✅ テスト
 
 ### 実行方法
 
 ```bash
-# 1. 依存パッケージが入っていない場合はインストール
-pip install -r requirements.txt
-
-# 2. テストを実行
 pytest -v --cov=budgetbook --cov-report=term-missing
-````
-
-✅ **テスト時のポイント**
-
-* `tests/conftest.py` がテスト用の一時ファイルDBを作成し、`init_db()` で初期化します
-* `init_db()` は `current_app.config["DB_PATH"]` を見てDBを作るので、
-  テスト・開発・本番で別のDBを使えます
-* テスト終了後、一時ファイルDBは削除されます
-
----
-
-### CI/CD（GitHub Actions）
-
-GitHub Actions でもテストが実行されます。
-CI環境でも同じく一時ファイルDBが使われるので、
-PR や main ブランチの変更でもローカルDBは影響を受けません。
-
----
-
-## ✅ DBの動作環境
-
-| 環境    | DBの種類      | パス                              |
-| ----- | ---------- | ------------------------------- |
-| ローカル  | SQLiteファイル | `budgetbook/db/budgetbook.db`   |
-| テスト   | 一時ファイルDB   | `tempfile.mkstemp()` で作られ、終了後削除 |
-| CI/CD | 一時ファイルDB   | GitHub Actions 内の一時ディレクトリ       |
-
----
-
-## ✅ これまでの改善点
-
-* `init_db()` が `current_app.config["DB_PATH"]` を参照するようになり、環境ごとにDB切替が可能
-* `pytest` のテストDBは一時ファイルに自動切替
-* `conftest.py` がアプリケーションコンテキスト内でDBを初期化
-* CI/CDでもローカルと同じ手順で動作
-
-
----
-
-### 異常系テストについて
-
-`tests/test_api.py` には、APIの正常系だけでなく **異常系テスト** も追加しています。
-例:
-
-```python
-def test_income_post_invalid_data(client):
-    res = client.post(
-        "/income",
-        json={"date": "", "category": "給料", "amount": 300000}
-    )
-    assert res.status_code == 400
 ```
 
-異常系テストを追加し、バリデーションが正しく動作するか確認します。
+✅ **テスト時はローカルDB(`budgetbook.db`)ではなく、一時ファイルDBを自動で使用するので安全です。**
+
+* `tests/conftest.py` がテスト用の一時ファイルDBを作成し、`init_db()` で初期化
+* 終了後、自動で削除されます
+* CI/CD(GitHub Actions)でも同じ手順で実行されます
 
 ---
 
-## ✅ GitHub Actions (CI)
+### 実装済みテスト
 
-本プロジェクトは GitHub Actions による自動テストを実行しています。
-CIの設定ファイルは `.github/workflows/ci.yml` にあり、以下を実行します：
+* `tests/test_income.py`
 
-* Pythonセットアップ
-* 依存関係インストール
-* **テスト用DB初期化 (`TESTING=1 python -m budgetbook.init_db`)**
-* `pytest` による自動テスト
+  * `/income` の正常系・異常系
+* `tests/test_expense.py`
 
-push や PR 時に自動でテストが走ります ✅
+  * `/expense` の正常系・異常系
+* `tests/test_summary.py`
 
----
-
-## ✅ 今後の開発タスク
-
-* [ ] APIの異常系テスト拡充（income, expense, summary）
-* [ ] バリデーション強化
-* [ ] 集計APIの詳細テスト
-* [ ] 可視化グラフ（棒/円/サンキー図）の実装
-* [ ] OCR入力機能（低優先度）
-
-## 🗂 タスク管理
-GitHub Projectsでタスクを管理しています  
-→ [開発タスクボード](https://github.com/users/tknhm/projects/2)
+  * `/expense/summary` のカテゴリ別・支払い方法別の集計
 
 ---
 
-## ✅ 参考
+### カバレッジ確認
 
-* [Flask ドキュメント](https://flask.palletsprojects.com/)
-* [pytest ドキュメント](https://docs.pytest.org/)
-* [GitHub Actions ワークフロー](https://docs.github.com/ja/actions)
+```bash
+pytest --cov=budgetbook --cov-report=term-missing
+```
+
+例:
+
+```
+budgetbook/app.py            65     12    82%   50-60
+budgetbook/routes/summary.py 20      0   100%
+```
+
+---
+
+## ✅ CI/CD
+
+GitHub Actions で `pytest` が自動実行されます。
+PR や main ブランチの変更時に自動テスト＆カバレッジ確認が走ります。
+
+---
+
+## ✅ 今後の予定
+
+* ✅ 収入・支出・集計APIの完成
+* ✅ pytest + GitHub Actions CI/CD整備
+* ⬜ グラフ可視化（棒グラフ・円グラフ・サンキー図）
+* ⬜ OCRによる手書き家計簿の読み込み
+* ⬜ スマホ対応UI
+
+---
+
+## ✅ 技術スタック
+
+* Python 3.12 + Flask
+* SQLite (ローカルDB)
+* pytest + coverage
+* GitHub Actions (CI)

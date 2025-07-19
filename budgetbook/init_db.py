@@ -40,10 +40,10 @@ def init_db():
         CREATE TABLE IF NOT EXISTS expense (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT NOT NULL,
-            store TEXT,
+            shop TEXT,
             category TEXT NOT NULL,
             amount INTEGER NOT NULL,
-            payment_method TEXT
+            payment TEXT
         );
         """
     )
