@@ -14,6 +14,15 @@ def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
+    # ✅ テスト時は古いデータを削除する
+    if app.config.get("TESTING", False):
+        cursor.executescript(
+            """
+            DROP TABLE IF EXISTS income;
+            DROP TABLE IF EXISTS expense;
+        """
+        )
+
     cursor.executescript(
         """
         CREATE TABLE IF NOT EXISTS income (

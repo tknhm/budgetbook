@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from budgetbook.db import get_db_connection
+from budgetbook.db import get_db
 from budgetbook.utils.response import json_response
 from budgetbook.utils.validators import is_valid_date
 
@@ -25,12 +25,12 @@ def expense_summary():
     if group_by not in ["category", "payment"]:
         return json_response({"error": "group_by must be 'category' or 'payment'"}, 400)
 
-    conn = get_db_connection()
-    rows = conn.execute(
+    db = get_db()
+    rows = db.execute(
         f"SELECT {group_by}, SUM(amount) AS total FROM expense WHERE date BETWEEN ? AND ? GROUP BY {group_by}",
         (start, end),
     ).fetchall()
-    conn.close()
+    db.close()
 
     result = [{group_by: row[group_by], "total": row["total"]} for row in rows]
     return json_response(result)

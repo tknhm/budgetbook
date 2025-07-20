@@ -62,7 +62,7 @@ def test_summary_group_by_payment(client):
     client.post(
         "/expense",
         json={
-            "date": "2025-07-16",
+            "date": "2025-07-31",
             "shop": "書店",
             "category": "教養",
             "amount": 1200,
@@ -76,7 +76,8 @@ def test_summary_group_by_payment(client):
     )
     assert res.status_code == 200
     data = res.get_json()
+    print("SUMMARY DATA:", data)
 
-    # PayPay:800, カード: 120000 が含まれるはず
+    # PayPay:800, カード: 12000 が含まれるはず
     assert any(item["payment"] == "PayPay" and item["total"] == 800 for item in data)
     assert any(item["payment"] == "カード" and item["total"] == 1200 for item in data)

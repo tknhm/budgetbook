@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from budgetbook.db import get_db_connection
+from budgetbook.db import get_db
 from budgetbook.utils.response import json_response
 from budgetbook.utils.validators import is_valid_amount, is_valid_date
 
@@ -32,8 +32,8 @@ def add_expense():
     if not is_valid_amount(data.get("amount")):
         return json_response({"error": "amount must be a number"}, 400)
 
-    conn = get_db_connection()
-    conn.execute(
+    db = get_db()
+    db.execute(
         "INSERT INTO expense (date, shop, category, amount, payment) VALUES (?, ?, ?, ?, ?)",
         (
             data["date"],
@@ -43,8 +43,8 @@ def add_expense():
             data.get("payment"),
         ),
     )
-    conn.commit()
-    conn.close()
+    db.commit()
+    db.close()
 
     return json_response({"message": "Expense added successfully"}, status=201)
 
@@ -53,10 +53,10 @@ def add_expense():
 def get_expense():
     start = request.args.get("start")
     end = request.args.get("end")
-    conn = get_db_connection()
-    rows = conn.execute(
+    db = get_db()
+    rows = db.execute(
         "SELECT * FROM expense WHERE date BETWEEN ? AND ? ORDER BY date", (start, end)
     ).fetchall()
-    conn.close()
+    db.close()
     result = [dict(row) for row in rows]
     return json_response(result)
