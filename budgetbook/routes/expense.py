@@ -1,7 +1,8 @@
 from flask import Blueprint, request
-from budgetbook.db import get_db
+from budgetbook.models import Expense
 from budgetbook.utils.response import json_response
 from budgetbook.utils.validators import is_valid_amount, is_valid_date
+from budgetbook.extensions import db
 
 expense_bp = Blueprint("expense", __name__)
 
@@ -32,31 +33,55 @@ def add_expense():
     if not is_valid_amount(data.get("amount")):
         return json_response({"error": "amount must be a number"}, 400)
 
-    db = get_db()
-    db.execute(
-        "INSERT INTO expense (date, shop, category, amount, payment) VALUES (?, ?, ?, ?, ?)",
-        (
-            data["date"],
-            data.get("shop"),
-            data["category"],
-            int(data["amount"]),
-            data.get("payment"),
-        ),
+    expense = Expense(
+        date=data["date"],
+        shop=data.get("shop"),
+        category=data["category"],
+        amount=data["amount"],
+        payment=data.get("payment"),
     )
-    db.commit()
-    db.close()
-
+    db.session.add(expense)
+    db.session.commit()
     return json_response({"message": "Expense added successfully"}, status=201)
 
 
 @expense_bp.route("/expense", methods=["GET"])
-def get_expense():
+def list_expense():
+    """全支出データを取得"""
+    expenses = Expense.query.all()
+    result = [
+        {
+            "id": e.id,
+            "date": e.date,
+            "shop": e.shop,
+            "category": e.category,
+            "amount": e.amount,
+            "payment": e.payment,
+        }
+        for e in expenses
+    ]
+    return json_response(result)
+
+
+@expense_bp.route("/expense", methods=["GET"])
+def list_expense_filtered():
     start = request.args.get("start")
     end = request.args.get("end")
-    db = get_db()
-    rows = db.execute(
-        "SELECT * FROM expense WHERE date BETWEEN ? AND ? ORDER BY date", (start, end)
-    ).fetchall()
-    db.close()
-    result = [dict(row) for row in rows]
+
+    query = Expense.query
+    if start and end:
+        query = query.filter(Expense.date.between(start, end))
+
+    expenses = query.all()
+    result = [
+        {
+            "id": e.id,
+            "date": e.date,
+            "shop": e.shop,
+            "category": e.category,
+            "amount": e.amount,
+            "payment": e.payment,
+        }
+        for e in expenses
+    ]
     return json_response(result)

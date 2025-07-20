@@ -1,18 +1,11 @@
-import sqlite3
-from flask import g, current_app
-from budgetbook.config import DB_PATH
+from budgetbook.extensions import db
 
 
-def get_db():
-    """リクエストごとにDB接続を作る"""
-    if "db" not in g:
-        g.db = sqlite3.connect(current_app.config["DB_PATH"])
-        g.db.row_factory = sqlite3.Row
-    return g.db
+def init_db(drop=False):
+    """DB初期化。drop=Trueなら既存テーブル削除"""
+    from budgetbook.models import Income, Expense  # モデル読み込み
 
-
-def close_db(e=None):
-    """リクエスト終了時にDBを閉じる"""
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
+    if drop:
+        db.drop_all()
+    db.create_all()
+    print(f"✅ Initialized DB → {db.engine.url}")

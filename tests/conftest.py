@@ -1,19 +1,23 @@
 import pytest
-from budgetbook.app import app
-from budgetbook.init_db import init_db
+from budgetbook.app import app, db
+from budgetbook.db import init_db
 
 
 @pytest.fixture
 def client(tmp_path):
-    # ✅ テスト専用のDBファイルを一時ディレクトリに作る
-    db_path = tmp_path / "test.db"
+    # ✅ テスト専用のDBパスに切り替え
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path}/test.db"
+    app.config["TESTING"] = True
 
-    # ✅ Flaskの設定をテスト用に上書き
-    app.config.update(TESTING=True, DB_PATH=str(db_path))  # ← これが重要  # 一時DBに切り替え
+    # ✅ Flaskアプリケーションコンテキストを使う
+    with app.app_context():
+        init_db(drop=True)  # ← ここがコンテキスト内
 
-    # ✅ 毎回テーブルをDROPして初期化する
-    init_db()
-
-    # ✅ テストクライアントを返す
+    # ✅ テストクライアントもコンテキスト内で作る
     with app.test_client() as client:
         yield client
+
+    # ✅ 終了後にDBセッション削除
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()

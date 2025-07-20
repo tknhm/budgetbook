@@ -1,25 +1,25 @@
 import os
 from flask import Flask
-from budgetbook.config import DB_PATH
+from flask_sqlalchemy import SQLAlchemy
 from budgetbook.routes.income import income_bp
 from budgetbook.routes.expense import expense_bp
 from budgetbook.routes.summary import summary_bp
-from budgetbook.db import get_db, close_db
+from budgetbook.extensions import db
 
 app = Flask(__name__)
 
-# デフォルト設定
-app.config.from_mapping(
-    DB_PATH=os.environ.get("DB_PATH", "budgetbook.db"),
-    TESTING=False,
-)
+# デフォルトのDBパス
+default_db_path = os.environ.get("DB_PATH", "budgetbook.db")
 
+# SQLite 接続設定
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{default_db_path}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# リクエスト終了時にDBを閉じる
-@app.teardown_appcontext
-def teardown_db(exception):
-    close_db(exception)
+# テストモード判定
+if os.environ.get("TESTING") == "1":
+    app.config["TESTING"] = True
 
+db.init_app(app)
 
 # Blueprint 登録
 app.register_blueprint(income_bp)

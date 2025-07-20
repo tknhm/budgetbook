@@ -1,7 +1,9 @@
 from flask import Blueprint, request
-from budgetbook.db import get_db
 from budgetbook.utils.response import json_response
 from budgetbook.utils.validators import is_valid_date
+from budgetbook.models import Expense
+from sqlalchemy import func
+from budgetbook.extensions import db
 
 summary_bp = Blueprint("summary", __name__)
 
@@ -25,12 +27,24 @@ def expense_summary():
     if group_by not in ["category", "payment"]:
         return json_response({"error": "group_by must be 'category' or 'payment'"}, 400)
 
-    db = get_db()
-    rows = db.execute(
-        f"SELECT {group_by}, SUM(amount) AS total FROM expense WHERE date BETWEEN ? AND ? GROUP BY {group_by}",
-        (start, end),
-    ).fetchall()
-    db.close()
+    # 集計ベースのクエリ
+    field = Expense.category if group_by == "category" else Expense.payment
 
-    result = [{group_by: row[group_by], "total": row["total"]} for row in rows]
-    return json_response(result)
+    query = db.session.query(
+        field.label(group_by), func.sum(Expense.amount).label("total")
+    )
+
+    # 日付フィルタ
+    if start and end:
+        query = query.filter(Expense.date.between(start, end))
+
+    # GROUP BY
+    query = query.group_by(field)
+
+    # 実行
+    results = query.all()
+
+    # JSON形式に変換
+    data = [{group_by: value, "total": total} for value, total in results]
+
+    return json_response(data)

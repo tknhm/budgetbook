@@ -1,7 +1,8 @@
 from flask import Blueprint, request
-from budgetbook.db import get_db
+from budgetbook.models import Income
 from budgetbook.utils.response import json_response
 from budgetbook.utils.validators import is_valid_amount, is_valid_date
+from budgetbook.extensions import db
 
 income_bp = Blueprint("income", __name__)
 
@@ -26,25 +27,50 @@ def add_income():
 
     amount = float(data["amount"])
 
-    db = get_db()
-    db.execute(
-        "INSERT INTO income (date, category, amount) VALUES (?, ?, ?)",
-        (data["date"], data["category"], amount),
+    income = Income(
+        date=data["date"],
+        category=data["category"],
+        amount=amount,
     )
-    db.commit()
-    db.close()
+    db.session.add(income)
+    db.session.commit()
 
     return json_response({"message": "Income added successfully"}, status=201)
 
 
 @income_bp.route("/income", methods=["GET"])
-def get_income():
+def list_income():
+    """全収入データを取得"""
+    incomes = Income.query.all()
+    result = [
+        {
+            "id": i.id,
+            "date": i.date,
+            "category": i.category,
+            "amount": i.amount,
+        }
+        for i in incomes
+    ]
+    return json_response(result)
+
+
+@income_bp.route("/income", methods=["GET"])
+def list_income_filtered():
     start = request.args.get("start")
     end = request.args.get("end")
-    db = get_db()
-    rows = db.execute(
-        "SELECT * FROM income WHERE date BETWEEN ? AND ? ORDER BY date", (start, end)
-    ).fetchall()
-    db.close()
-    result = [dict(row) for row in rows]
+
+    query = Income.query
+    if start and end:
+        query = query.filter(Income.date.between(start, end))
+
+    incomes = query.all()
+    result = [
+        {
+            "id": i.id,
+            "date": i.date,
+            "category": i.category,
+            "amount": i.amount,
+        }
+        for i in incomes
+    ]
     return json_response(result)
