@@ -24,14 +24,7 @@ def add_expense():
 
 @expense_bp.route("/expense", methods=["GET"])
 def list_expense():
-    """全支出データを取得"""
-    expenses = Expense.query.all()
-
-    return expenses_schema.dump(expenses), 200
-
-
-@expense_bp.route("/expense", methods=["GET"])
-def list_expense_filtered():
+    """支出データ取得（期間フィルタ付き）"""
     start = request.args.get("start")
     end = request.args.get("end")
 
@@ -41,6 +34,7 @@ def list_expense_filtered():
     if end:
         query = query.filter(Expense.date <= end)
 
+    # デフォルトは全件、フィルタがあれば適用
     expenses = query.order_by(Expense.date.desc()).all()
 
     return expenses_schema.dump(expenses), 200
