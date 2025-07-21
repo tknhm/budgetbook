@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from budgetbook.routes.income import income_bp
 from budgetbook.routes.expense import expense_bp
 from budgetbook.routes.summary import summary_bp
-from budgetbook.extensions import db
+from budgetbook.extensions import db, ma
 
 app = Flask(__name__)
 
@@ -20,6 +20,7 @@ if os.environ.get("TESTING") == "1":
     app.config["TESTING"] = True
 
 db.init_app(app)
+ma.init_app(app)
 
 # Blueprint 登録
 app.register_blueprint(income_bp)

@@ -4,7 +4,7 @@ from budgetbook.extensions import db
 class Income(db.Model):
     __tablename__ = "income"
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String, nullable=False)
+    date = db.Column(db.Date, nullable=False)
     category = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
 
@@ -12,7 +12,7 @@ class Income(db.Model):
 class Expense(db.Model):
     __tablename__ = "expense"
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String, nullable=False)
+    date = db.Column(db.Date, nullable=False)
     shop = db.Column(db.String)
     category = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
