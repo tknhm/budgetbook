@@ -1,5 +1,5 @@
 from budgetbook.extensions import ma
-from marshmallow import fields, validate
+from marshmallow import fields, validate, Schema
 
 
 class IncomeSchema(ma.Schema):
@@ -26,3 +26,19 @@ class ExpenseSchema(ma.Schema):
 
 expense_schema = ExpenseSchema()
 expenses_schema = ExpenseSchema(many=True)
+
+
+# カテゴリ別集計用
+class SummaryCategorySchema(Schema):
+    category = fields.Str(required=True)
+    total = fields.Int(required=True)
+
+
+# 支払い方法別集計用
+class SummaryPaymentSchema(Schema):
+    payment = fields.Str(required=True)
+    total = fields.Int(required=True)
+
+
+summary_category_schema = SummaryCategorySchema(many=True)
+summary_payment_schema = SummaryPaymentSchema(many=True)

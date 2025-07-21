@@ -1,50 +1,60 @@
 from flask import Blueprint, request
-from budgetbook.utils.response import json_response
-from budgetbook.utils.validators import is_valid_date
-from budgetbook.models import Expense
+from budgetbook.models import Income, Expense
 from sqlalchemy import func
 from budgetbook.extensions import db
 
 summary_bp = Blueprint("summary", __name__)
 
 
-@summary_bp.route("/expense/summary", methods=["GET"])
-def expense_summary():
+def apply_date_filter(query, start, end):
+    """共通の期間フィルタ"""
+    if start:
+        query = query.filter(Expense.date >= start)
+    if end:
+        query = query.filter(Expense.date <= end)
+    return query
+
+
+@summary_bp.route("/income/summary/category", methods=["GET"])
+def income_summary_by_category():
+    """カテゴリ別の収入集計"""
     start = request.args.get("start")
     end = request.args.get("end")
-    group_by = request.args.get("group_by", "category")
 
-    if not all([start, end, group_by]):
-        return json_response({"error": "start, end, and group_by are required"}, 400)
+    query = db.session.query(Income.category, func.sum(Income.amount).label("total"))
+    if start:
+        query = query.filter(Income.date >= start)
+    if end:
+        query = query.filter(Income.date <= end)
+    query = query.group_by(Income.category)
 
-    # 日付バリデーション
-    for date in [start, end]:
-        if not is_valid_date(date):
-            return json_response(
-                {"error": "Invalid date format (YYYY-MM-DD required)"}, 400
-            )
+    result = [{"category": category, "total": total} for category, total in query.all()]
+    return result, 200
 
-    if group_by not in ["category", "payment"]:
-        return json_response({"error": "group_by must be 'category' or 'payment'"}, 400)
 
-    # 集計ベースのクエリ
-    field = Expense.category if group_by == "category" else Expense.payment
+@summary_bp.route("/expense/summary/category", methods=["GET"])
+def expense_summary_by_category():
+    """カテゴリ別の支出集計"""
+    start = request.args.get("start")
+    end = request.args.get("end")
 
-    query = db.session.query(
-        field.label(group_by), func.sum(Expense.amount).label("total")
-    )
+    query = db.session.query(Expense.category, func.sum(Expense.amount).label("total"))
+    query = apply_date_filter(query, start, end)
+    query = query.group_by(Expense.category)
 
-    # 日付フィルタ
-    if start and end:
-        query = query.filter(Expense.date.between(start, end))
+    result = [{"category": category, "total": total} for category, total in query.all()]
+    return result, 200
 
-    # GROUP BY
-    query = query.group_by(field)
 
-    # 実行
-    results = query.all()
+@summary_bp.route("/expense/summary/payment", methods=["GET"])
+def expense_summary_by_payment():
+    """カテゴリ別の支出集計"""
+    start = request.args.get("start")
+    end = request.args.get("end")
 
-    # JSON形式に変換
-    data = [{group_by: value, "total": total} for value, total in results]
+    query = db.session.query(Expense.payment, func.sum(Expense.amount).label("total"))
+    query = apply_date_filter(query, start, end)
+    query = query.group_by(Expense.payment)
 
-    return json_response(data)
+    result = [{"payment": payment, "total": total} for payment, total in query.all()]
+    return result, 200

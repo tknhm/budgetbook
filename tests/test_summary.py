@@ -1,4 +1,34 @@
-def test_summary_group_by_category(client):
+def test_income_summary_group_by_category(client):
+    """summary API でカテゴリごとの集計ができること"""
+
+    # 収入を登録
+    client.post(
+        "/income",
+        json={
+            "date": "2025-07-20",
+            "category": "給料",
+            "amount": 5000,
+        },
+    )
+    client.post(
+        "/income",
+        json={
+            "date": "2025-07-10",
+            "category": "賞与",
+            "amount": 50000,
+        },
+    )
+
+    # カテゴリごとの集計
+    res = client.get("/income/summary/category?start=2025-07-01&end=2025-07-31")
+    assert res.status_code == 200
+    data = res.get_json()
+
+    assert any(item["category"] == "給料" and item["total"] == 5000 for item in data)
+    assert any(item["category"] == "賞与" and item["total"] == 50000 for item in data)
+
+
+def test_expense_summary_group_by_category(client):
     """summary API でカテゴリごとの集計ができること"""
 
     # 収入を登録
@@ -34,9 +64,7 @@ def test_summary_group_by_category(client):
     )
 
     # カテゴリごとの集計
-    res = client.get(
-        "/expense/summary?start=2025-07-01&end=2025-07-31&group_by=category"
-    )
+    res = client.get("/expense/summary/category?start=2025-07-01&end=2025-07-31")
     assert res.status_code == 200
     data = res.get_json()
 
@@ -45,7 +73,7 @@ def test_summary_group_by_category(client):
     assert any(item["category"] == "日用品" and item["total"] == 500 for item in data)
 
 
-def test_summary_group_by_payment(client):
+def test_expense_summary_group_by_payment(client):
     """summary API で支払い方法ごとの集計ができること"""
 
     # 支出を登録
@@ -71,12 +99,9 @@ def test_summary_group_by_payment(client):
     )
 
     # 支払い方法ごとの集計
-    res = client.get(
-        "/expense/summary?start=2025-07-01&end=2025-07-31&group_by=payment"
-    )
+    res = client.get("/expense/summary/payment?start=2025-07-01&end=2025-07-31")
     assert res.status_code == 200
     data = res.get_json()
-    print("SUMMARY DATA:", data)
 
     # PayPay:800, カード: 12000 が含まれるはず
     assert any(item["payment"] == "PayPay" and item["total"] == 800 for item in data)

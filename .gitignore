@@ -12,3 +12,4 @@ __pycache__/
 
 # SQLite DB
 budgetbook/db/*.db
+instance/*
