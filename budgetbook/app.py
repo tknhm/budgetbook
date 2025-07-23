@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from budgetbook.routes.income import income_bp
 from budgetbook.routes.expense import expense_bp
@@ -26,6 +26,12 @@ ma.init_app(app)
 app.register_blueprint(income_bp)
 app.register_blueprint(expense_bp)
 app.register_blueprint(summary_bp)
+
+
+@app.route("/")
+def dashboard():
+    return render_template("dashboard.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
