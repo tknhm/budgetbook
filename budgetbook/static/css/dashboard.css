@@ -1,32 +1,43 @@
 .table-container {
-    margin: 20px 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: sans-serif;
-  }
-  
-  thead {
-    background: #f4f4f4;
-  }
-  
-  th, td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
-  
-  tbody tr:nth-child(even) {
-    background: #fafafa;
-  }
-  
-  tbody tr:hover {
-    background: #f0f9ff;
-    transition: background 0.2s ease-in-out;
-  }
-  
+  margin: 20px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: sans-serif;
+}
+
+thead {
+  background: #f4f4f4;
+}
+
+th {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  position: sticky;    /* ✅ ヘッダーだけ固定 */
+  top: 0;
+  background: #f4f4f4; /* ✅ 背景を固定して透けないように */
+  z-index: 2;          /* ✅ 背景が行より上に表示されるように */
+}
+
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+tbody tr:hover {
+  background: #f0f9ff;
+  transition: background 0.2s ease-in-out;
+}
