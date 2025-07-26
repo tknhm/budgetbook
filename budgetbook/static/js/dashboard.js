@@ -45,7 +45,7 @@ function renderTable(data, isExpense = true) {
         <td>${row.category}</td>
         ${isExpense ? `<td>${row.shop || "-"}</td>` : ""}
         <td>${row.amount.toLocaleString()}円</td>
-        ${isExpense ? `<td>${row.payment}</td>` : `<td>${row.memo || "-"}</td>`}
+        ${isExpense ? `<td>${row.payment}</td>` : ""}
       </tr>
     `
     )
@@ -116,4 +116,62 @@ function drawSummaryChart(data) {
       ],
     },
   });
+}
+
+document
+  .getElementById("filter-expenses")
+  .addEventListener("click", async () => {
+    const start = document.getElementById("filter-expense-start").value;
+    const end = document.getElementById("filter-expense-end").value;
+
+    let url = "/expense";
+    const params = [];
+    if (start) params.push(`start=${start}`);
+    if (end) params.push(`end=${end}`);
+    if (params.length > 0) url += "?" + params.join("&");
+
+    const res = await fetch(url);
+    const data = await res.json();
+    document.querySelector("#expense-list tbody").innerHTML = renderTable(
+      data,
+      true
+    );
+  });
+
+document.getElementById("filter-btn").addEventListener("click", async () => {
+  const start = document.getElementById("start-date").value;
+  const end = document.getElementById("end-date").value;
+
+  updateExpenseList(start, end);
+  updateIncomeList(start, end);
+});
+
+async function updateIncomeList(start, end) {
+  let url = "/income";
+  const params = [];
+  if (start) params.push(`start=${start}`);
+  if (end) params.push(`end=${end}`);
+  if (params.length > 0) url += "?" + params.join("&");
+
+  const res = await fetch(url);
+  const data = await res.json();
+  document.querySelector("#income-list tbody").innerHTML = renderTable(
+    data,
+    false
+  );
+}
+
+async function updateExpenseList(start, end) {
+  let url = "/expense";
+  const params = [];
+  if (start) params.push(`start=${start}`);
+  if (end) params.push(`end=${end}`);
+  if (params.length > 0) url += "?" + params.join("&");
+
+  const res = await fetch(url);
+  const data = await res.json();
+  document.querySelector("#expense-list tbody").innerHTML = renderTable(
+    data,
+    true
+  );
 }
