@@ -107,3 +107,7 @@ tbody tr:hover {
 .filter-box .reset-btn:hover {
   background: #bbb;
 }
+
+#charts {
+  width: 400px;
+}

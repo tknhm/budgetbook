@@ -77,9 +77,9 @@ async function loadCharts() {
   drawExpenseChart(expenseSummary);
 
   // 収支比較
-  const res2 = await fetch("/summary/income_vs_expense");
-  const summaryData = await res2.json();
-  drawSummaryChart(summaryData);
+  // const res2 = await fetch("/summary/income_vs_expense");
+  // const summaryData = await res2.json();
+  // drawSummaryChart(summaryData);
 }
 
 let expenseChartInstance;
@@ -118,32 +118,13 @@ function drawSummaryChart(data) {
   });
 }
 
-document
-  .getElementById("filter-expenses")
-  .addEventListener("click", async () => {
-    const start = document.getElementById("filter-expense-start").value;
-    const end = document.getElementById("filter-expense-end").value;
-
-    let url = "/expense";
-    const params = [];
-    if (start) params.push(`start=${start}`);
-    if (end) params.push(`end=${end}`);
-    if (params.length > 0) url += "?" + params.join("&");
-
-    const res = await fetch(url);
-    const data = await res.json();
-    document.querySelector("#expense-list tbody").innerHTML = renderTable(
-      data,
-      true
-    );
-  });
-
 document.getElementById("filter-btn").addEventListener("click", async () => {
   const start = document.getElementById("start-date").value;
   const end = document.getElementById("end-date").value;
 
   updateExpenseList(start, end);
   updateIncomeList(start, end);
+  updateexpenseChartInstance(start, end);
 });
 
 async function updateIncomeList(start, end) {
@@ -174,4 +155,46 @@ async function updateExpenseList(start, end) {
     data,
     true
   );
+}
+
+async function fetchExpenseSummaryByCategory(start, end) {
+  const params = new URLSearchParams();
+  if (start) params.append("start", start);
+  if (end) params.append("end", end);
+
+  const res = await fetch(`/expense/summary/category?${params.toString()}`);
+  return await res.json();
+}
+
+async function updateexpenseChartInstance(start, end) {
+  const data = await fetchExpenseSummaryByCategory(start, end);
+
+  const labels = data.map((item) => item.category);
+  const amounts = data.map((item) => item.total);
+
+  if (expenseChartInstance) {
+    expenseChartInstance.destroy();
+  }
+
+  const ctx = document.getElementById("expense-chart").getContext("2d");
+  expenseChartInstance = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "カテゴリ別支出",
+          data: amounts,
+          backgroundColor: [
+            "#FF6384",
+            "#36A2EB",
+            "#FFCE56",
+            "#4BC0C0",
+            "#9966FF",
+            "#FF9F49",
+          ],
+        },
+      ],
+    },
+  });
 }
