@@ -26,6 +26,29 @@
 
   <!-- 一覧 -->
   <section id="lists">
+    <h2>月別・支払い方法別支出</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>支払い方法</th>
+            {% for month in months %}
+            <th>{{ month }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for method, month_data in payment_summary.items() %}
+          <tr>
+            <td>{{ method }}</td>
+            {% for month in months %}
+            <td>{{ month_data.get(month, 0) }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <h2>支出一覧</h2>
     <div class="table-container">
       <table id="expense-list">

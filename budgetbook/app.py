@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from budgetbook.routes.income import income_bp
 from budgetbook.routes.expense import expense_bp
 from budgetbook.routes.summary import summary_bp
+from budgetbook.routes.dashboard import dashboard_bp
 from budgetbook.extensions import db, ma
 
 app = Flask(__name__)
@@ -26,11 +27,7 @@ ma.init_app(app)
 app.register_blueprint(income_bp)
 app.register_blueprint(expense_bp)
 app.register_blueprint(summary_bp)
-
-
-@app.route("/")
-def dashboard():
-    return render_template("dashboard.html")
+app.register_blueprint(dashboard_bp)
 
 
 if __name__ == "__main__":

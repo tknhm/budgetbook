@@ -20,7 +20,7 @@ class ExpenseSchema(ma.Schema):
     category = fields.Str(required=True)
     amount = fields.Int(required=True, validate=validate.Range(min=1))
     payment = fields.Str(
-        required=True, validate=validate.OneOf(["現金", "カード", "PayPay"])
+        required=True, validate=validate.OneOf(["現金", "カード", "PayPay", "ルミネカード"])
     )
 
 
