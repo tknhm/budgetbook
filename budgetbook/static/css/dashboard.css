@@ -111,3 +111,10 @@ tbody tr:hover {
 #charts {
   width: 400px;
 }
+
+#sankey_chart {
+  width: 100%;
+  max-width: 800px;
+  height: 500px;
+  margin: 30px auto;
+}

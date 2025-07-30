@@ -198,3 +198,37 @@ async function updateexpenseChartInstance(start, end) {
     },
   });
 }
+
+// sankeyデータを取得して描画
+function drawSankeyChart() {
+  fetch("/sankey-data")
+    .then((response) => response.json())
+    .then((data) => {
+      const nodes = data.nodes;
+      const links = data.links;
+
+      // Google Charts 用のデータを整形
+      const chartData = new google.visualization.DataTable();
+      chartData.addColumn("string", "From");
+      chartData.addColumn("string", "To");
+      chartData.addColumn("number", "Amount");
+
+      const rows = links.map((link) => [
+        nodes[link.source],
+        nodes[link.target],
+        link.value,
+      ]);
+
+      chartData.addRows(rows);
+
+      const chart = new google.visualization.Sankey(
+        document.getElementById("sankey-chart")
+      );
+      chart.draw(chartData, {});
+    })
+    .catch((error) => {
+      console.error("Error loading sankey data:", error);
+    });
+}
+
+// window.drawSankeyChart = drawSankeyChart;
