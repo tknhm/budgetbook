@@ -1,7 +1,10 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, Response
 from budgetbook.models import Income, Expense
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from budgetbook.extensions import db
+from collections import defaultdict
+from datetime import datetime
+import json
 
 summary_bp = Blueprint("summary", __name__)
 
@@ -58,3 +61,64 @@ def expense_summary_by_payment():
 
     result = [{"payment": payment, "total": total} for payment, total in query.all()]
     return result, 200
+
+
+@summary_bp.route("/monthly-summary")
+def monthly_summary():
+    income_data = (
+        db.session.query(
+            extract("year", Income.date).label("year"),
+            extract("month", Income.date).label("month"),
+            func.sum(Income.amount).label("total_income"),
+        )
+        .group_by("year", "month")
+        .all()
+    )
+
+    expense_data = (
+        db.session.query(
+            extract("year", Expense.date).label("year"),
+            extract("month", Expense.date).label("month"),
+            func.sum(Expense.amount).label("total_expense"),
+        )
+        .group_by("year", "month")
+        .all()
+    )
+
+    summary = defaultdict(lambda: {"income": 0, "expense": 0})
+
+    for year, month, total in income_data:
+        key = f"{int(year)}-{int(month):02d}"
+        summary[key]["income"] = total
+
+    for year, month, total in expense_data:
+        key = f"{int(year)}-{int(month):02d}"
+        summary[key]["expense"] = total
+
+    # 並び順を確定
+    sorted_summary = dict(sorted(summary.items()))
+
+    return Response(json.dumps(sorted_summary, ensure_ascii=False))
+
+
+@summary_bp.route("/asset-trend")
+def asset_trend():
+    income_data = (
+        db.session.query(
+            extract("year", Income.date).label("year"),
+            extract("month", Income.date).label("month"),
+            func.sum(Income.amount).label("total_income"),
+        )
+        .group_by("year", "month")
+        .order_by("year", "month")
+        .all()
+    )
+
+    cumulative = 0
+    trend = []
+    for year, month, total in income_data:
+        cumulative += total
+        label = f"{int(year)}-{int(month):02d}"
+        trend.append({"month": label, "total": cumulative})
+
+    return Response(json.dumps(trend, ensure_ascii=False))

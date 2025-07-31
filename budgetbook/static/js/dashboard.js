@@ -77,9 +77,8 @@ async function loadCharts() {
   drawExpenseChart(expenseSummary);
 
   // 収支比較
-  // const res2 = await fetch("/summary/income_vs_expense");
-  // const summaryData = await res2.json();
-  // drawSummaryChart(summaryData);
+  drawMonthlyComparisonChart();
+  drawAssetTrendChart();
 }
 
 let expenseChartInstance;
@@ -231,4 +230,76 @@ function drawSankeyChart() {
     });
 }
 
-// window.drawSankeyChart = drawSankeyChart;
+async function drawMonthlyComparisonChart() {
+  const response = await fetch("/monthly-summary");
+  const data = await response.json();
+
+  const labels = Object.keys(data);
+  const incomeData = labels.map((month) => data[month].income || 0);
+  const expenseData = labels.map((month) => data[month].expense || 0);
+
+  const ctx = document
+    .getElementById("monthly-comparison-chart")
+    .getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "収入",
+          data: incomeData,
+          backgroundColor: "rgba(75, 192, 192, 0.7)",
+        },
+        {
+          label: "支出",
+          data: expenseData,
+          backgroundColor: "rgba(255, 99, 132, 0.7)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        title: { display: true, text: "月別 収支比較" },
+      },
+    },
+  });
+}
+
+async function drawAssetTrendChart() {
+  const response = await fetch("/asset-trend");
+  const data = await response.json();
+
+  const labels = data.map((item) => item.month);
+  const values = data.map((item) => item.total);
+
+  const ctx = document.getElementById("asset-trend-chart").getContext("2d");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "資産推移",
+          data: values,
+          borderColor: "rgba(54, 162, 235,1)",
+          backgroundColor: "rgba(64, 162, 235, 0.1)",
+          fill: true,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        title: { display: true, text: "資産の推移" },
+      },
+      scales: {
+        y: { beginAtZero: true },
+      },
+    },
+  });
+}

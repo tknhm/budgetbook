@@ -108,8 +108,12 @@ tbody tr:hover {
   background: #bbb;
 }
 
-#charts {
-  width: 400px;
+.chart {
+  max-height: 300px;
+}
+
+#expense-chart {
+  max-height: 200px;
 }
 
 #sankey_chart {
@@ -117,4 +121,15 @@ tbody tr:hover {
   max-width: 800px;
   height: 500px;
   margin: 30px auto;
+}
+
+.chart-grid {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.chart-item {
+  flex: 1;
+  min-width: 300px;
 }
