@@ -40,12 +40,16 @@ function renderTable(data, isExpense = true) {
   return data
     .map(
       (row) => `
-      <tr>
+      <tr data-id="${row.id}">
         <td>${row.date}</td>
         <td>${row.category}</td>
         ${isExpense ? `<td>${row.shop || "-"}</td>` : ""}
         <td>${row.amount.toLocaleString()}円</td>
         ${isExpense ? `<td>${row.payment}</td>` : ""}
+        <td>
+          <button class="btn edit-btn" data-id="${row.id}">編集</button>
+          <button class="btn delete-btn" data-id="${row.id}">削除</button>
+        </td>
       </tr>
     `
     )
@@ -303,3 +307,115 @@ async function drawAssetTrendChart() {
     },
   });
 }
+
+// 編集ボタン押下時に既存データを取得してフォームに埋める
+async function openEditIncomeModal(id) {
+  const res = await fetch(`/income/${id}`);
+  const income = await res.json();
+  // フォームのフィールドを埋める
+  document.getElementById("income-date").value = income.date;
+  document.getElementById("income-category").value = income.category;
+  document.getElementById("income-amount").value = income.amount;
+  // 保存ボタンにIDを付与しておく
+  document.getElementById("income-save-btn").dataset.editId = id;
+}
+
+// 保存（更新）
+async function submitIncomeEdit() {
+  const id = document.getElementById("income-save-btn").dataset.editId;
+  const payload = {
+    date: document.getElementById("income-date").value,
+    category: document.getElementById("income-category").value,
+    amount: Number(document.getElementById("income-amount").value),
+  };
+  const res = await fetch(`/income/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "applciation/json" },
+    body: JSON.stringify(payload),
+  });
+  if (res.ok) {
+    await updateIncomeList(/* current filter */);
+  } else {
+    const err = await res.json();
+    console.error("更新失敗", err);
+  }
+}
+
+// 削除
+async function deleteIncome(id) {
+  if (!confirm("本当に削除しますか？")) return;
+  const res = await fetch(`/income/${id}`, { method: "DELETE" });
+  if (res.status === 204) {
+    await updateIncomeList(/* current filter */);
+  }
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.matches(".edit-btn")) {
+    const id = e.target.dataset.id;
+    openEditIncomeModal(id);
+  }
+  if (e.target.matches(".delete-btn")) {
+    const id = e.target.dataset.id;
+    deleteIncome(id);
+  }
+});
+
+// // 編集ボタン押下時に既存データを取得してフォームに埋める
+// async function openEditExpenseModal(id) {
+//   const res = await fetch(`/expense/${id}`);
+//   const expense = await res.json();
+//   // フォームのフィールドを埋める
+//   document.getElementById("expense-date").value = expense.date;
+//   document.getElementById("expense-shop").value = expense.shop;
+//   document.getElementById("expense-category").value = expense.category;
+//   document.getElementById("expense-amount").value = expense.amount;
+//   document.getElementById("expense-payment").value = expense.payment;
+//   // 保存ボタンにIDを付与しておく
+//   document.getElementById("expense-save-btn").dataset.editId = id;
+// }
+
+// // 保存（更新）
+// async function submitExpenseEdit() {
+//   const id = document.getElementById("expense-save-btn").dataset.editId;
+//   const payload = {
+//     date: document.getElementById("expense-date").value,
+//     shop: document.getElementById("expense-shop").value,
+//     category: document.getElementById("expense-category").value,
+//     amount: Number(document.getElementById("expense-amount").value),
+//     payment: document.getElementById("expense-payment").value,
+//   };
+//   const res = await fetch(`/expense/${id}`, {
+//     method: "PATCH",
+//     headers: { "Content-Type": "applciation/json" },
+//     body: JSON.stringify(payload),
+//   });
+//   if (res.ok) {
+//     await updateExpenseList(/* current filter */);
+//   } else {
+//     const err = await res.json();
+//     console.error("更新失敗", err);
+//   }
+// }
+
+// // 削除
+// async function deleteExpense(id) {
+//   if (!confirm("本当に削除しますか？")) return;
+//   const res = await fetch(`/expense/${id}`, { method: "DELETE" });
+//   if (res.status === 204) {
+//     await updateIncomeList(/* current filter */);
+//   }
+// }
+
+// document.addEventListener("click", (e) => {
+//   if (e.target.matches(".edit-btn")) {
+//     const id = e.target.dataset.id;
+//     openEditIncomeModal(id);
+//     openEditExpenseModal(id);
+//   }
+//   if (e.target.matches(".delete-btn")) {
+//     const id = e.target.dataset.id;
+//     deleteIncome(id);
+//     deleteExpense(id);
+//   }
+// });

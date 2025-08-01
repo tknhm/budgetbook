@@ -59,6 +59,7 @@
             <th>店名</th>
             <th>金額</th>
             <th>支払い方法</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +76,7 @@
             <th>日付</th>
             <th>カテゴリ</th>
             <th>金額</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -103,8 +105,8 @@
       </div>
     </div>
 
-    <h2>収支の流れ（サンキー図）</h2>
-    <div id="sankey-chart" class="chart"></div>
+    <!-- <h2>収支の流れ（サンキー図）</h2>
+    <div id="sankey-chart" class="chart"></div> -->
   </section>
 
   <hr />
@@ -114,12 +116,13 @@
     <div class="col-md-6">
       <h3>支出登録</h3>
       <form id="expense-form">
-        <input type="date" name="date" class="form-control mb-2" required />
-        <input type="text" name="shop" placeholder="お店" class="form-control mb-2" required />
-        <input type="text" name="category" placeholder="カテゴリ" class="form-control mb-2" required />
-        <input type="number" name="amount" placeholder="金額" class="form-control mb-2" required />
-        <input type="text" name="payment" placeholder="支払い方法" class="form-control mb-2" required />
-        <button type="submit" class="btn btn-primary">支出を登録</button>
+        <input id="expense-date" type="date" name="date" class="form-control mb-2" required />
+        <input id="expense-shop" type="text" name="shop" placeholder="お店" class="form-control mb-2" required />
+        <input id="expense-category" type="text" name="category" placeholder="カテゴリ" class="form-control mb-2"
+          required />
+        <input id="expense-amount" type="number" name="amount" placeholder="金額" class="form-control mb-2" required />
+        <input id="expense-payment" type="text" name="payment" placeholder="支払い方法" class="form-control mb-2" required />
+        <button id="expense-save-btn" type="submit" class="btn btn-primary">支出を登録</button>
       </form>
     </div>
 
@@ -127,10 +130,10 @@
     <div class="col-md-6">
       <h3>収入登録</h3>
       <form id="income-form">
-        <input type="date" name="date" class="form-control mb-2" required />
-        <input type="text" name="category" placeholder="カテゴリ" class="form-control mb-2" required />
-        <input type="number" name="amount" placeholder="金額" class="form-control mb-2" required />
-        <button type="submit" class="btn btn-primary">収入を登録</button>
+        <input id="income-date" type="date" name="date" class="form-control mb-2" required />
+        <input id="income-category" type="text" name="category" placeholder="カテゴリ" class="form-control mb-2" required />
+        <input id="income-amount" type="number" name="amount" placeholder="金額" class="form-control mb-2" required />
+        <button id="income-save-btn" type="submit" class="btn btn-primary">収入を登録</button>
       </form>
     </div>
   </div>

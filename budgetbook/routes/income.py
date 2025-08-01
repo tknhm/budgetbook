@@ -39,3 +39,32 @@ def list_income():
     incomes = query.order_by(Income.date.desc()).all()
 
     return incomes_schema.dump(incomes), 200
+
+
+@income_bp.route("/income/<int:income_id>", methods=["GET"])
+def get_income(income_id):
+    inc = Income.query.get_or_404(income_id)
+    return income_schema.dump(inc), 200
+
+
+@income_bp.route("/income/<int:income_id>", methods=["PATCH"])
+def update_income(income_id):
+    inc = Income.query.get_or_404(income_id)
+    try:
+        # partial=True で部分更新を許可
+        data = income_schema.load(request.json, partial=True)
+    except ValidationError as err:
+        return {"errors": err.messages}, 400
+
+    for key, value in data.items():
+        setattr(inc, key, value)
+    db.session.commit()
+    return income_schema.dump(inc), 200
+
+
+@income_bp.route("/income/<int:income_id>", methods=["DELETE"])
+def delete_income(income_id):
+    inc = Income.query.get_or_404(income_id)
+    db.session.delete(inc)
+    db.session.commit()
+    return "", 204

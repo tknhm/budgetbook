@@ -38,3 +38,32 @@ def list_expense():
     expenses = query.order_by(Expense.date.desc()).all()
 
     return expenses_schema.dump(expenses), 200
+
+
+@expense_bp.route("/expense/<int:expense_id>", methods=["GET"])
+def get_expense(expense_id):
+    inc = Expense.query.get_or_404(expense_id)
+    return expense_schema.dump(inc), 200
+
+
+@expense_bp.route("/expense/<int:expense_id>", methods=["PATCH"])
+def update_expense(expense_id):
+    inc = Expense.query.get_or_404(expense_id)
+    try:
+        # partial=True で部分更新を許可
+        data = expense_schema.load(request.json, partial=True)
+    except ValidationError as err:
+        return {"errors": err.messages}, 400
+
+    for key, value in data.items():
+        setattr(inc, key, value)
+    db.session.commit()
+    return expense_schema.dump(inc), 200
+
+
+@expense_bp.route("/expense/<int:expense_id>", methods=["DELETE"])
+def delete_expense(expense_id):
+    inc = Expense.query.get_or_404(expense_id)
+    db.session.delete(inc)
+    db.session.commit()
+    return "", 204
